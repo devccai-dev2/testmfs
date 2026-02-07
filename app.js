@@ -17,6 +17,23 @@ const defaultColumns = [
 
 let loadedPdf = null;
 let extractedRows = [];
+let pdfjsReadyPromise = null;
+
+const ensurePdfJsReady = async () => {
+  if (!pdfjsReadyPromise) {
+    if (window.pdfjsReady) {
+      pdfjsReadyPromise = window.pdfjsReady;
+    } else if (window.pdfjsLib) {
+      pdfjsReadyPromise = Promise.resolve(window.pdfjsLib);
+    } else {
+      pdfjsReadyPromise = Promise.reject(
+        new Error("PDF.js failed to load. Check your network or CDN access.")
+      );
+    }
+  }
+
+  return pdfjsReadyPromise;
+};
 
 const updateStatus = (message) => {
   statusEl.textContent = message;
@@ -217,11 +234,22 @@ input.addEventListener("change", async (event) => {
     return;
   }
 
-  updateStatus("Loading PDF…");
-  const arrayBuffer = await file.arrayBuffer();
-  loadedPdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  updateStatus(`Loaded ${file.name}. Ready to extract.`);
-  extractButton.disabled = false;
+  try {
+    updateStatus("Loading PDF…");
+    const pdfjsLib = await ensurePdfJsReady();
+    if (!pdfjsLib) {
+      updateStatus("PDF.js failed to load. Check your network and refresh.");
+      return;
+    }
+    const arrayBuffer = await file.arrayBuffer();
+    loadedPdf = await pdfjsLib
+      .getDocument({ data: arrayBuffer, disableWorker: true })
+      .promise;
+    updateStatus(`Loaded ${file.name}. Ready to extract.`);
+    extractButton.disabled = false;
+  } catch (error) {
+    updateStatus(error.message);
+  }
 });
 
 extractButton.addEventListener("click", async () => {

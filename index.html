@@ -35,7 +35,41 @@
       </section>
     </main>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.js" integrity="sha512-8/cNCLQ3B1O1VvK5Yg2CtOu3oImnE7+F8d0VQoe8dJh1BS8oJ4FRk3Zlz+oP3w6C1m2K34SRbTvmgP7oG5E0NQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+      window.pdfjsReady = new Promise((resolve, reject) => {
+        const sources = [
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.js",
+          "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.min.js",
+          "https://unpkg.com/pdfjs-dist@4.2.67/build/pdf.min.js",
+          "./vendor/pdf.min.js",
+        ];
+
+        let index = 0;
+        const loadNext = () => {
+          if (index >= sources.length) {
+            reject(
+              new Error(
+                "Unable to load PDF.js. Check your network or place pdf.min.js in ./vendor."
+              )
+            );
+            return;
+          }
+
+          const script = document.createElement("script");
+          script.src = sources[index];
+          script.crossOrigin = "anonymous";
+          script.referrerPolicy = "no-referrer";
+          script.onload = () => resolve(window.pdfjsLib);
+          script.onerror = () => {
+            index += 1;
+            loadNext();
+          };
+          document.head.appendChild(script);
+        };
+
+        loadNext();
+      });
+    </script>
     <script src="app.js"></script>
   </body>
 </html>
