@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PDF Statement Table Extractor</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <h1>PDF Statement Table Extractor</h1>
+        <p>
+          Upload a statement PDF (like bKash) to extract structured columns and rows.
+          The tool renders a detected table and lets you download a CSV.
+        </p>
+      </header>
+
+      <section class="panel">
+        <label class="file-input">
+          <span>Select PDF</span>
+          <input id="pdf-input" type="file" accept="application/pdf" />
+        </label>
+        <button id="extract-btn" type="button" disabled>Extract Table</button>
+        <button id="download-btn" type="button" disabled>Download CSV</button>
+      </section>
+
+      <section class="status" id="status">Waiting for PDF…</section>
+
+      <section class="table-section">
+        <table id="data-table">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+    </main>
+
+    <script>
+      window.pdfjsReady = new Promise((resolve, reject) => {
+        const sources = [
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.js",
+          "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.min.js",
+          "https://unpkg.com/pdfjs-dist@4.2.67/build/pdf.min.js",
+          "./vendor/pdf.min.js",
+        ];
+
+        let index = 0;
+        const loadNext = () => {
+          if (index >= sources.length) {
+            reject(
+              new Error(
+                "Unable to load PDF.js. Check your network or place pdf.min.js in ./vendor."
+              )
+            );
+            return;
+          }
+
+          const script = document.createElement("script");
+          script.src = sources[index];
+          script.crossOrigin = "anonymous";
+          script.referrerPolicy = "no-referrer";
+          script.onload = () => resolve(window.pdfjsLib);
+          script.onerror = () => {
+            index += 1;
+            loadNext();
+          };
+          document.head.appendChild(script);
+        };
+
+        loadNext();
+      });
+    </script>
+    <script src="app.js"></script>
+  </body>
+</html>
